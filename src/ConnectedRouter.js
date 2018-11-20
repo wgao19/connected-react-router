@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { connect } from 'react-redux'
+import { connect, ReactReduxContext } from 'react-redux'
 import { Router } from 'react-router'
 import { onLocationChanged } from './actions'
 
@@ -20,13 +20,13 @@ const createConnectedRouter = (structure) => {
       this.inTimeTravelling = false
 
       // Subscribe to store changes
-      this.unsubscribe = context.store.subscribe(() => {
+      this.unsubscribe = props.store.subscribe(() => {
         // Extract store's location
         const {
           pathname: pathnameInStore,
           search: searchInStore,
           hash: hashInStore,
-        } = toJS(getIn(context.store.getState(), ['router', 'location']))
+        } = toJS(getIn(props.store.getState(), ['router', 'location']))
         // Extract history's location
         const {
           pathname: pathnameInHistory,
@@ -77,13 +77,6 @@ const createConnectedRouter = (structure) => {
     }
   }
 
-  ConnectedRouter.contextTypes = {
-    store: PropTypes.shape({
-      getState: PropTypes.func.isRequired,
-      subscribe: PropTypes.func.isRequired,
-    }).isRequired,
-  }
-
   ConnectedRouter.propTypes = {
     history: PropTypes.shape({
       action: PropTypes.string.isRequired,
@@ -110,7 +103,10 @@ const createConnectedRouter = (structure) => {
     onLocationChanged: (location, action) => dispatch(onLocationChanged(location, action))
   })
 
-  return connect(mapStateToProps, mapDispatchToProps)(ConnectedRouter)
+  const ConnectedRouterWithContext = props => 
+    <ReactReduxContext.Consumer>{({ store }) => <ConnectedRouter store={store} {...props} />}</ReactReduxContext.Consumer>
+
+  return connect(mapStateToProps, mapDispatchToProps)(ConnectedRouterWithContext)
 }
 
 export default createConnectedRouter
